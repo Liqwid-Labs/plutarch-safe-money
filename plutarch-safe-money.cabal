@@ -67,5 +67,7 @@ library
   build-depends:
     , generics-sop
     , liqwid-plutarch-extra
+    , plutus-ledger-api
+    , tagged
 
   hs-source-dirs:  src
