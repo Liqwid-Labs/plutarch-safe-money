@@ -1577,11 +1577,11 @@
         "plutarch": "plutarch"
       },
       "locked": {
-        "lastModified": 1653523443,
-        "narHash": "sha256-rlsyHCizoQZkzvCeGeuO6RA7E8RQ7xQWTEDyflBA5Z8=",
+        "lastModified": 1653527003,
+        "narHash": "sha256-AZgee+tbmHC4oFrhzS1Aw6CBkSFVxINcfm3nXJX2vkc=",
         "ref": "main",
-        "rev": "3c63cfb4cbc1d18e7347a3a47a36707cd414fbc1",
-        "revCount": 9,
+        "rev": "73cde84b2a1221149aa4283189854912e0307bcf",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.com/Liqwid-Labs/liqwid-plutarch-extra"
       },

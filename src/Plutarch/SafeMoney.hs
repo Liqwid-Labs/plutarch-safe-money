@@ -2,12 +2,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE PolyKinds #-}
 
 module Plutarch.SafeMoney (
     PDiscrete (..),
 ) where
 
-import Data.Kind (Type)
 import Generics.SOP (I (I))
 import Generics.SOP.TH (deriveGeneric)
 import Plutarch (
@@ -23,7 +23,7 @@ import Plutarch.Integer (PInteger)
 import Plutarch.Show (PShow)
 
 -- | @since 1.0.0
-newtype PDiscrete (tag :: S -> Type) (s :: S)
+newtype PDiscrete (tag :: k) (s :: S)
     = PDiscrete (Term s (PTagged tag PInteger))
 
 deriveGeneric ''PDiscrete
