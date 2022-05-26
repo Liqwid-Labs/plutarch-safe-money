@@ -50,10 +50,15 @@ import Plutarch.Extra.Tagged (PTagged)
 import Plutarch.Extra.TermCont (pletC, pmatchC)
 import Plutarch.Integer (PInteger)
 import Plutarch.Lift (pconstant)
+import Plutarch.Numeric.Additive (
+    AdditiveMonoid (zero),
+    AdditiveSemigroup ((+)),
+ )
 import Plutarch.Show (PShow)
 import Plutarch.TryFrom (PTryFrom (PTryFromExcess, ptryFrom'))
 import Plutarch.Unsafe (punsafeCoerce)
 import Plutus.V1.Ledger.Value (AssetClass (AssetClass))
+import Prelude hiding ((+))
 
 -- | @since 1.0.0
 newtype PDiscrete (tag :: k) (s :: S)
@@ -101,6 +106,19 @@ instance PTryFrom PData (PAsData (PDiscrete tag)) where
             PTryFromExcess PData (PAsData PInteger)
     ptryFrom' d k =
         ptryFrom' @_ @(PAsData PInteger) d $ k . first punsafeCoerce
+
+-- | @since 1.0.0
+instance AdditiveSemigroup (Term s (PDiscrete tag)) where
+    t1 + t2 = unTermCont $ do
+        PDiscrete t1' <- pmatchC t1
+        PDiscrete t2' <- pmatchC t2
+        t1'' <- pletC (pextract # t1')
+        t2'' <- pletC (pextract # t2')
+        pure . pcon . PDiscrete $ ppure # (t1'' + t2'')
+
+-- | @since 1.0.0
+instance AdditiveMonoid (Term s (PDiscrete tag)) where
+    zero = pcon . PDiscrete $ ppure # 0
 
 {- | Downcast a 'PValue' to a 'PDiscrete' unit, providing a witness of the 'PAssetClass'.
      @since 0.3

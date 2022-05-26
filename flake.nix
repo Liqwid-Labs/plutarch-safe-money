@@ -10,6 +10,7 @@
   inputs.plutarch.url = "github:Liqwid-Labs/plutarch/staging";
   inputs.plutarch.inputs.nixpkgs.follows = "plutarch/haskell-nix/nixpkgs-unstable";
   inputs.liqwid-plutarch-extra.url = "git+ssh://git@github.com/Liqwid-Labs/liqwid-plutarch-extra?ref=main";
+  inputs.plutarch-numeric.url = "git+ssh://git@github.com/Liqwid-Labs/plutarch-numeric?ref=main";
 
   outputs = inputs@{ self, nixpkgs, haskell-nix, plutarch, ... }:
     let
@@ -42,6 +43,10 @@
               src = inputs.liqwid-plutarch-extra;
               subdirs = [ "." ];
             }
+            {
+              src = inputs.plutarch-numeric;
+              subdirs = [ "." ];
+            }
           ];
           modules = [ (plutarch.haskellModule system) ];
           shell = {
@@ -68,6 +73,7 @@
               ps.plutarch
               ps.plutarch-extra
               ps.liqwid-plutarch-extra
+              ps.plutarch-numeric
             ];
           };
         };

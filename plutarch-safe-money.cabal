@@ -67,6 +67,7 @@ library
   build-depends:
     , generics-sop
     , liqwid-plutarch-extra
+    , plutarch-numeric
     , plutus-ledger-api
     , tagged
 
