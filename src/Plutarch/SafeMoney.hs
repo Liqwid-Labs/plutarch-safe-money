@@ -33,6 +33,10 @@ import Plutarch (
     (:-->),
  )
 import Plutarch.Api.V1 (PValue)
+import "plutarch" Plutarch.Api.V1 (
+    AmountGuarantees,
+    KeyGuarantees,
+ )
 import Plutarch.Api.V1.AssetClass (
     PAssetClass,
     passetClass,
@@ -57,7 +61,7 @@ import Plutarch.Numeric.Additive (
 import Plutarch.Show (PShow)
 import Plutarch.TryFrom (PTryFrom (PTryFromExcess, ptryFrom'))
 import Plutarch.Unsafe (punsafeCoerce)
-import Plutus.V1.Ledger.Value (AssetClass (AssetClass))
+import PlutusLedgerApi.V1.Value (AssetClass (AssetClass))
 import Prelude hiding ((+))
 
 -- | @since 1.0.0
@@ -125,8 +129,8 @@ instance AdditiveMonoid (Term s (PDiscrete tag)) where
 -}
 pvalueDiscrete ::
     forall k.
-    forall (tag :: k) (s :: S).
-    Term s (PAssetClass :--> PValue :--> PDiscrete tag)
+    forall (tag :: k) (keys :: KeyGuarantees) (amounts :: AmountGuarantees) (s :: S).
+    Term s (PAssetClass :--> PValue keys amounts :--> PDiscrete tag)
 pvalueDiscrete = phoistAcyclic $
     plam $ \ac f -> pcon . PDiscrete $ ppure # (passetClassValueOf # f # ac)
 
@@ -135,9 +139,9 @@ pvalueDiscrete = phoistAcyclic $
 -}
 pvalueDiscrete' ::
     forall k.
-    forall (tag :: k) (s :: S).
+    forall (tag :: k) (keys :: KeyGuarantees) (amounts :: AmountGuarantees) (s :: S).
     Tagged tag AssetClass ->
-    Term s (PValue :--> PDiscrete tag)
+    Term s (PValue keys amounts :--> PDiscrete tag)
 pvalueDiscrete' (Tagged (AssetClass (cs, tn))) = phoistAcyclic $
     plam $ \f ->
         pcon . PDiscrete $
@@ -150,8 +154,8 @@ pvalueDiscrete' (Tagged (AssetClass (cs, tn))) = phoistAcyclic $
 -}
 pdiscreteValue ::
     forall k.
-    forall (tag :: k) (s :: S).
-    Term s (PAssetClass :--> PDiscrete tag :--> PValue)
+    forall (tag :: k) (keys :: KeyGuarantees) (amounts :: AmountGuarantees) (s :: S).
+    Term s (PAssetClass :--> PDiscrete tag :--> PValue keys amounts)
 pdiscreteValue = phoistAcyclic $
     plam $ \ac p -> unTermCont $ do
         PDiscrete t <- pmatchC p
@@ -165,9 +169,9 @@ pdiscreteValue = phoistAcyclic $
      @since 0.3
 -}
 pdiscreteValue' ::
-    forall (tag :: Type) (s :: S).
+    forall (tag :: Type) (keys :: KeyGuarantees) (amounts :: AmountGuarantees) (s :: S).
     Tagged tag AssetClass ->
-    Term s (PDiscrete tag :--> PValue)
+    Term s (PDiscrete tag :--> PValue keys amounts)
 pdiscreteValue' (Tagged (AssetClass (cs, tn))) =
     phoistAcyclic $
         plam $ \p -> unTermCont $ do
