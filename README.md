@@ -1,3 +1,5 @@
+_Note, 2022-06-011_: this repository is alpha-level software. Stability and correctness should not be assumed.
+
 # `plutarch-safe-money`
 
 ## What is this?
