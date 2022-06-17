@@ -12,9 +12,9 @@
   inputs.plutarch.inputs.nixpkgs.follows = "plutarch/haskell-nix/nixpkgs-unstable";
 
   inputs.plutarch-numeric.url =
-    "git+ssh://git@github.com/Liqwid-Labs/plutarch-numeric?ref=main";
+    "github:Liqwid-Labs/plutarch-numeric?ref=main";
   inputs.liqwid-plutarch-extra.url =
-    "git+ssh://git@github.com/Liqwid-Labs/liqwid-plutarch-extra?ref=main";
+    "github:Liqwid-Labs/liqwid-plutarch-extra?ref=main";
 
   inputs.haskell-language-server.url = "github:haskell/haskell-language-server";
   inputs.haskell-language-server.flake = false;

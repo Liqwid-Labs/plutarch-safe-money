@@ -32,7 +32,6 @@ common common-lang
   build-depends:
     , base            ^>=4.16
     , plutarch
-    , plutarch-extra
 
   default-extensions:
     BangPatterns
