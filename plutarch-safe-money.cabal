@@ -30,7 +30,7 @@ common common-lang
     -Wmissing-export-lists -Wmissing-deriving-strategies -Werror
 
   build-depends:
-    , base            ^>=4.16
+    , base      ^>=4.16
     , plutarch
 
   default-extensions:

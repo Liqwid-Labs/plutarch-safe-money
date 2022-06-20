@@ -188,6 +188,7 @@
         self.flake.${system}.checks
         // {
           formatCheck = formatCheckFor system;
+          plutarch-safe-money = self.flake.${system}.packages."plutarch-safe-money:lib:plutarch-safe-money";
         }
       );
       check = perSystem (system:
