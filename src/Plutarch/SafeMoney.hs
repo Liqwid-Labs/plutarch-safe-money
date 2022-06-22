@@ -5,6 +5,14 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ViewPatterns #-}
+
+
+{-# OPTIONS_GHC -Wno-all #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module Plutarch.SafeMoney (
     PDiscrete (..),
@@ -24,6 +32,7 @@ import Plutarch (
     PlutusType,
     S,
     Term,
+    pto,
     pcon,
     phoistAcyclic,
     plam,
@@ -50,9 +59,9 @@ import Plutarch.Bool (PEq, POrd)
 import Plutarch.Builtin (PAsData, PData, PIsData)
 import Plutarch.Extra.Applicative (ppure)
 import Plutarch.Extra.Comonad (pextract)
-import Plutarch.Extra.Tagged (PTagged)
+import Plutarch.Extra.Tagged (PTagged(..))
 import Plutarch.Extra.TermCont (pletC, pmatchC)
-import Plutarch.Integer (PInteger)
+import Plutarch.Integer 
 import Plutarch.Lift (pconstant)
 import Plutarch.Numeric.Additive (
     AdditiveMonoid (zero),
@@ -63,6 +72,8 @@ import Plutarch.TryFrom (PTryFrom (PTryFromExcess, ptryFrom'))
 import Plutarch.Unsafe (punsafeCoerce)
 import PlutusLedgerApi.V1.Value (AssetClass (AssetClass))
 import Prelude hiding ((+))
+import GHC.TypeLits
+import Data.Proxy
 
 -- | @since 1.0.0
 newtype PDiscrete (tag :: k) (s :: S)
@@ -178,10 +189,59 @@ pdiscreteValue' (Tagged (AssetClass (cs, tn))) =
             PDiscrete t <- pmatchC p
             pure $ psingletonValue # pconstant cs # pconstant tn # (pextract # t)
 
-{-
-pdiscreteValue' (Tagged (AssetClass (cs, tn))) = phoistAcyclic $
-  plam $ \p ->
-    psingletonValue
-      # pconstant cs
-      # pconstant tn
-      # Tagged.puntag p -}
+type family Fst (ab :: (ka, kb)) :: ka where Fst '(a,b) = a
+type family Snd (ab :: (ka, kb)) :: ka where Snd '(a,b) = b            
+
+data GT
+data Ada
+data Lovelace
+
+type family ConversionScale (from :: k) (to :: k) :: (Nat, Nat)
+
+type instance ConversionScale GT Ada = '(1, 1)
+type instance ConversionScale Ada Lovelace = '(1, 1000000)
+type instance ConversionScale Lovelace Ada = '(1000000, 1)
+
+type GoodScale (scale :: (Nat, Nat)) =
+  ( CmpNat 0 (Fst scale) ~ 'LT
+  , CmpNat 0 (Snd scale) ~ 'LT
+  , KnownNat (Fst scale)
+  , KnownNat (Snd scale)
+  )
+
+scale ::
+    forall (scale :: (Nat, Nat)).
+    GoodScale scale =>
+    (Integer, Integer)
+scale = (natVal (Proxy @(Fst scale)), natVal (Proxy @(Snd scale)))
+                
+pconvert ::
+    forall (to :: *) (from :: *) (sc :: (Nat, Nat)) (s :: S).
+    ( ConversionScale from to ~ sc
+    , GoodScale sc
+    ) =>
+    Term s (PDiscrete from :--> PDiscrete to)
+pconvert = phoistAcyclic $ plam $
+           \f' -> unTermCont $ do
+             PDiscrete f <- pmatchC f'
+             pure . pcon . PDiscrete $
+               ppure # (pdiv # ((pextract # f) * (pconstant n)) # pconstant d)
+  where
+    (n, d) = scale @sc
+
+-- class (GoodScale (ConversionScale from to)) => Convertable (from :: *) (to :: *) where
+--   pconvert' :: Term s (PDiscrete from :--> PDiscrete to)
+
+-- class Convertable (from :: *) (to :: *) where
+--   convert :: Term s (PDiscrete from :--> PDiscrete to)
+
+-- $> :set -XTypeApplications
+
+-- $> import Data.Proxy
+
+-- $> a = pcon $ PDiscrete $ pcon $ PTagged 5 :: Term s (PDiscrete Ada)
+
+-- $> :t pconvert @GT # a
+
+-- $> :t pconvert @Lovelace # a
+
