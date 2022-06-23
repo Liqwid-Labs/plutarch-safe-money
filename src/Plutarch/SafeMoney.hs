@@ -48,7 +48,7 @@ import "liqwid-plutarch-extra" Plutarch.Api.V1.Value (
     passetClassValue,
     psingletonValue,
  )
-import Plutarch.Bool (PEq, POrd)
+import Plutarch.Bool (PEq, POrd, pif, (#==))
 import Plutarch.Builtin (PAsData, PData, PIsData)
 import Plutarch.Extra.Applicative (ppure)
 import Plutarch.Extra.Comonad (pextract)
@@ -62,6 +62,7 @@ import Plutarch.Extra.Tagged (PTagged)
 import Plutarch.Extra.TermCont (pletC, pmatchC)
 import Plutarch.Integer (PInteger)
 import Plutarch.Lift (pconstant)
+import Plutarch.Maybe (PMaybe (..))
 import Plutarch.Numeric.Additive (
     AdditiveMonoid (zero),
     AdditiveSemigroup ((+)),
@@ -186,49 +187,43 @@ pdiscreteValue' (Tagged (AssetClass (cs, tn))) =
             PDiscrete t <- pmatchC p
             pure $ psingletonValue # pconstant cs # pconstant tn # (pextract # t)
 
--- | @since 1.0.0
+-- | @since 1.0.1
 type PRateDecimal = PFixedDecimal 1000000
 
--- | @since 1.0.0
-newtype PExchangeRate (from :: k) (to :: k) (s :: S)
+-- | @since 1.0.1
+newtype PExchangeRate (from :: k) (to :: k') (s :: S)
     = PExchangeRate (Term s (PTagged '(from, to) PRateDecimal))
 
 deriveGeneric ''PExchangeRate
 
--- | @since 1.0.0
+-- | @since 1.0.1
 deriving via
     (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
     instance
         PlutusType (PExchangeRate from to)
 
--- | @since 1.0.0
+-- | @since 1.0.1
 deriving via
     (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
     instance
         PIsData (PExchangeRate from to)
 
--- | @since 1.0.0
+-- | @since 1.0.1
 deriving via
     (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
     instance
         PEq (PExchangeRate from to)
 
--- | @since 1.0.0
+-- | @since 1.0.1
 deriving via
     (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
     instance
         POrd (PExchangeRate from to)
 
--- | @since 1.0.0
+-- | @since 1.0.1
 deriving anyclass instance PShow (PExchangeRate from to)
 
--- | @since 1.0.0
-deriving via
-    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
-    instance
-        PTryFrom a PRateDecimal => PTryFrom a (PExchangeRate from to)
-
--- | @since 1.0.0
+-- | @since 1.0.1
 instance PTryFrom PData (PAsData (PExchangeRate from to)) where
     type
         PTryFromExcess PData (PAsData (PExchangeRate from to)) =
@@ -237,42 +232,46 @@ instance PTryFrom PData (PAsData (PExchangeRate from to)) where
 
 {- | Make @PExchangeRation@ with given @PIntegers. Two Integers are nominator and denominator.
 
- @since 1.0.0
+ @since 1.0.1
 -}
 pexchangeRatio ::
     forall k.
     forall (to :: k) (from :: k) (s :: S).
-    Term s (PInteger :--> PInteger :--> PExchangeRate from to)
+    Term s (PInteger :--> PInteger :--> PMaybe (PExchangeRate from to))
 pexchangeRatio = phoistAcyclic $ plam $ \n d -> pexchangeRatio' n d
 
 {- | Same as @pexchangeRation@ but in Haskell level.
 
- @since 1.0.0
+ @since 1.0.1
 -}
 pexchangeRatio' ::
     forall k.
     forall (to :: k) (from :: k) (s :: S).
     Term s PInteger ->
     Term s PInteger ->
-    Term s (PExchangeRate from to)
-pexchangeRatio' n' d' = unTermCont $ do
-    n <- pletC $ fromPInteger # n'
-    d <- pletC $ fromPInteger # d'
-    pure . pcon . PExchangeRate $ ppure #$ n `divide` d
+    Term s (PMaybe (PExchangeRate from to))
+pexchangeRatio' n d =
+    pif
+        (d #== 0)
+        (pcon PNothing)
+        ( pcon . PJust $
+            pcon . PExchangeRate $
+                ppure #$ (fromPInteger # n) `divide` (fromPInteger # d)
+        )
 
 {- | Change one @PDiscrete@ to other with given exchange rate.
 
- @since 1.0.0
+ @since 1.0.1
 -}
 pexchange ::
     forall k.
     forall (to :: k) (from :: k) (s :: S).
     Term s (PExchangeRate from to :--> PDiscrete from :--> PDiscrete to)
-pexchange = phoistAcyclic $ plam $ \rate x -> pexchange # rate # x
+pexchange = phoistAcyclic $ plam $ \rate x -> pexchange' rate x
 
 {- | Same as @pexchange@ but in Haskell level.
 
- @since 1.0.0
+ @since 1.0.1
 -}
 pexchange' ::
     forall k.
