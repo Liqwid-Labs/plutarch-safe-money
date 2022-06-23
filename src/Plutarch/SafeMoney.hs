@@ -5,6 +5,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Plutarch.SafeMoney (
     PDiscrete (..),
@@ -12,6 +13,9 @@ module Plutarch.SafeMoney (
     pvalueDiscrete',
     pdiscreteValue,
     pdiscreteValue',
+    PExchangeRate (..),
+    pexchange,
+    pexchangeRatio,
 ) where
 
 import Data.Bifunctor (first)
@@ -32,11 +36,7 @@ import Plutarch (
     (#$),
     (:-->),
  )
-import Plutarch.Api.V1 (PValue)
-import "plutarch" Plutarch.Api.V1 (
-    AmountGuarantees,
-    KeyGuarantees,
- )
+import Plutarch.Api.V1 (AmountGuarantees, KeyGuarantees, PValue)
 import Plutarch.Api.V1.AssetClass (
     PAssetClass,
     passetClass,
@@ -46,14 +46,21 @@ import "liqwid-plutarch-extra" Plutarch.Api.V1.Value (
     passetClassValue,
     psingletonValue,
  )
-import Plutarch.Bool (PEq, POrd)
+import Plutarch.Bool (PEq, POrd, pif, (#==))
 import Plutarch.Builtin (PAsData, PData, PIsData)
 import Plutarch.Extra.Applicative (ppure)
 import Plutarch.Extra.Comonad (pextract)
+import Plutarch.Extra.FixedDecimal (
+    DivideSemigroup (divide),
+    PFixedDecimal,
+    fromPInteger,
+    toPInteger,
+ )
 import Plutarch.Extra.Tagged (PTagged)
 import Plutarch.Extra.TermCont (pletC, pmatchC)
 import Plutarch.Integer (PInteger)
 import Plutarch.Lift (pconstant)
+import Plutarch.Maybe (PMaybe (..))
 import Plutarch.Numeric.Additive (
     AdditiveMonoid (zero),
     AdditiveSemigroup ((+)),
@@ -62,7 +69,7 @@ import Plutarch.Show (PShow)
 import Plutarch.TryFrom (PTryFrom (PTryFromExcess, ptryFrom'))
 import Plutarch.Unsafe (punsafeCoerce)
 import PlutusLedgerApi.V1.Value (AssetClass (AssetClass))
-import Prelude hiding ((+))
+import Prelude (Applicative (pure), Num ((*)), ($), (.))
 
 -- | @since 1.0.0
 newtype PDiscrete (tag :: k) (s :: S)
@@ -178,10 +185,78 @@ pdiscreteValue' (Tagged (AssetClass (cs, tn))) =
             PDiscrete t <- pmatchC p
             pure $ psingletonValue # pconstant cs # pconstant tn # (pextract # t)
 
-{-
-pdiscreteValue' (Tagged (AssetClass (cs, tn))) = phoistAcyclic $
-  plam $ \p ->
-    psingletonValue
-      # pconstant cs
-      # pconstant tn
-      # Tagged.puntag p -}
+-- | @since 1.0.1
+type PRateDecimal = PFixedDecimal 1000000
+
+-- | @since 1.0.1
+newtype PExchangeRate (from :: k) (to :: k') (s :: S)
+    = PExchangeRate (Term s (PTagged '(from, to) PRateDecimal))
+
+deriveGeneric ''PExchangeRate
+
+-- | @since 1.0.1
+deriving via
+    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
+    instance
+        PlutusType (PExchangeRate from to)
+
+-- | @since 1.0.1
+deriving via
+    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
+    instance
+        PIsData (PExchangeRate from to)
+
+-- | @since 1.0.1
+deriving via
+    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
+    instance
+        PEq (PExchangeRate from to)
+
+-- | @since 1.0.1
+deriving via
+    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
+    instance
+        POrd (PExchangeRate from to)
+
+-- | @since 1.0.1
+deriving anyclass instance PShow (PExchangeRate from to)
+
+-- | @since 1.0.1
+instance PTryFrom PData (PAsData (PExchangeRate from to)) where
+    type
+        PTryFromExcess PData (PAsData (PExchangeRate from to)) =
+            PTryFromExcess PData (PAsData PRateDecimal)
+    ptryFrom' d k = ptryFrom' @_ @(PAsData PRateDecimal) d $ k . first punsafeCoerce
+
+{- | Make @PExchangeRation@ with given @PIntegers. Two Integers are nominator and denominator.
+ When given denominator is zero, it will return @PNothing@.
+
+ @since 1.0.1
+-}
+pexchangeRatio ::
+    forall k.
+    forall (to :: k) (from :: k) (s :: S).
+    Term s (PInteger :--> PInteger :--> PMaybe (PExchangeRate from to))
+pexchangeRatio = phoistAcyclic $
+    plam $ \n d ->
+        pif
+            (d #== 0)
+            (pcon PNothing)
+            ( pcon . PJust $
+                pcon . PExchangeRate $
+                    ppure #$ (fromPInteger # n) `divide` (fromPInteger # d)
+            )
+
+{- | Change one @PDiscrete@ to other with given exchange rate.
+
+ @since 1.0.1
+-}
+pexchange ::
+    forall k.
+    forall (to :: k) (from :: k) (s :: S).
+    Term s (PExchangeRate from to :--> PDiscrete from :--> PDiscrete to)
+pexchange = phoistAcyclic $
+    plam $ \rate' x' -> unTermCont $ do
+        PExchangeRate ((pextract #) -> rate) <- pmatchC rate'
+        PDiscrete ((fromPInteger #) . (pextract #) -> x) <- pmatchC x'
+        pure . pcon . PDiscrete $ ppure #$ toPInteger # (x * rate)
