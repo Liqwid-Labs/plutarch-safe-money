@@ -14,9 +14,7 @@ module Plutarch.SafeMoney (
     pdiscreteValue,
     pdiscreteValue',
     PExchangeRate (..),
-    pexchange',
     pexchange,
-    pexchangeRatio',
     pexchangeRatio,
 ) where
 
@@ -231,6 +229,7 @@ instance PTryFrom PData (PAsData (PExchangeRate from to)) where
     ptryFrom' d k = ptryFrom' @_ @(PAsData PRateDecimal) d $ k . first punsafeCoerce
 
 {- | Make @PExchangeRation@ with given @PIntegers. Two Integers are nominator and denominator.
+ When given denominator is zero, it will return @PNothing@.
 
  @since 1.0.1
 -}
@@ -238,26 +237,15 @@ pexchangeRatio ::
     forall k.
     forall (to :: k) (from :: k) (s :: S).
     Term s (PInteger :--> PInteger :--> PMaybe (PExchangeRate from to))
-pexchangeRatio = phoistAcyclic $ plam $ \n d -> pexchangeRatio' n d
-
-{- | Same as @pexchangeRation@ but in Haskell level.
-
- @since 1.0.1
--}
-pexchangeRatio' ::
-    forall k.
-    forall (to :: k) (from :: k) (s :: S).
-    Term s PInteger ->
-    Term s PInteger ->
-    Term s (PMaybe (PExchangeRate from to))
-pexchangeRatio' n d =
-    pif
-        (d #== 0)
-        (pcon PNothing)
-        ( pcon . PJust $
-            pcon . PExchangeRate $
-                ppure #$ (fromPInteger # n) `divide` (fromPInteger # d)
-        )
+pexchangeRatio = phoistAcyclic $
+    plam $ \n d ->
+        pif
+            (d #== 0)
+            (pcon PNothing)
+            ( pcon . PJust $
+                pcon . PExchangeRate $
+                    ppure #$ (fromPInteger # n) `divide` (fromPInteger # d)
+            )
 
 {- | Change one @PDiscrete@ to other with given exchange rate.
 
@@ -267,19 +255,8 @@ pexchange ::
     forall k.
     forall (to :: k) (from :: k) (s :: S).
     Term s (PExchangeRate from to :--> PDiscrete from :--> PDiscrete to)
-pexchange = phoistAcyclic $ plam $ \rate x -> pexchange' rate x
-
-{- | Same as @pexchange@ but in Haskell level.
-
- @since 1.0.1
--}
-pexchange' ::
-    forall k.
-    forall (to :: k) (from :: k) (s :: S).
-    Term s (PExchangeRate from to) ->
-    Term s (PDiscrete from) ->
-    Term s (PDiscrete to)
-pexchange' rate' x' = unTermCont $ do
-    PExchangeRate ((pextract #) -> rate) <- pmatchC rate'
-    PDiscrete ((fromPInteger #) . (pextract #) -> x) <- pmatchC x'
-    pure . pcon . PDiscrete $ ppure #$ toPInteger # (x * rate)
+pexchange = phoistAcyclic $
+    plam $ \rate' x' -> unTermCont $ do
+        PExchangeRate ((pextract #) -> rate) <- pmatchC rate'
+        PDiscrete ((fromPInteger #) . (pextract #) -> x) <- pmatchC x'
+        pure . pcon . PDiscrete $ ppure #$ toPInteger # (x * rate)
