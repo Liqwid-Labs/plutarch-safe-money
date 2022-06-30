@@ -1,6 +1,7 @@
 _Note, 2022-06-011_: this repository is alpha-level software. Stability and correctness should not be assumed.
 
 # `plutarch-safe-money`
+Public discussion and assistance can be found on [discord](https://discord.gg/yGkjxrYueB) @ #liqwid-plutarch-extra
 
 ## What is this?
 
