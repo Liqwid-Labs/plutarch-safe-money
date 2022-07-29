@@ -66,7 +66,6 @@ import Plutarch.Numeric.Additive (
     AdditiveMonoid (zero),
     AdditiveSemigroup ((+)),
  )
-import Plutarch.Prelude (PSubtype)
 import Plutarch.Show (PShow)
 import Plutarch.TryFrom (PTryFrom (PTryFromExcess, ptryFrom'))
 import Plutarch.Unsafe (punsafeCoerce)
@@ -100,14 +99,6 @@ newtype PDiscrete (tag :: k) (s :: S)
 -- | @since 1.2.0
 instance DerivePlutusType (PDiscrete a) where
     type DPTStrat _ = PlutusTypeNewtype
-
--- | @since 1.0.0
-deriving anyclass instance
-    ( PTryFrom a PInteger
-    , PSubtype a (PDiscrete tag)
-    , PSubtype a (PTagged tag PInteger)
-    ) =>
-    PTryFrom a (PDiscrete tag)
 
 -- | @since 1.0.0
 instance PTryFrom PData (PAsData (PDiscrete tag)) where
