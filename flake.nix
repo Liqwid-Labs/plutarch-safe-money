@@ -25,9 +25,9 @@
     };
 
     plutarch-numeric.url =
-      "github:Liqwid-Labs/plutarch-numeric?ref=connor/liqwid-nix";
+      "github:Liqwid-Labs/plutarch-numeric?ref=main";
     liqwid-plutarch-extra.url =
-      "github:Liqwid-Labs/liqwid-plutarch-extra?ref=connor/liqwid-nix";
+      "github:Liqwid-Labs/liqwid-plutarch-extra?ref=main";
 
     liqwid-nix.url = "github:Liqwid-Labs/liqwid-nix";
   };
