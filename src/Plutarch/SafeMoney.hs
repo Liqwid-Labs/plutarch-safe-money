@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -21,11 +21,12 @@ module Plutarch.SafeMoney (
 import Data.Bifunctor (first)
 import Data.Kind (Type)
 import Data.Tagged (Tagged (Tagged))
-import Generics.SOP (I (I))
-import Generics.SOP.TH (deriveGeneric)
+import GHC.Generics (Generic)
+import qualified Generics.SOP as SOP
 import Plutarch (
-    DerivePNewtype (DerivePNewtype),
+    DerivePlutusType (..),
     PlutusType,
+    PlutusTypeNewtype,
     S,
     Term,
     pcon,
@@ -46,7 +47,7 @@ import "liqwid-plutarch-extra" Plutarch.Api.V1.Value (
     passetClassValue,
     psingletonValue,
  )
-import Plutarch.Bool (PEq, POrd, pif, (#==))
+import Plutarch.Bool (PEq, POrd, PPartialOrd, pif, (#==))
 import Plutarch.Builtin (PAsData, PData, PIsData)
 import Plutarch.Extra.Applicative (ppure)
 import Plutarch.Extra.Comonad (pextract)
@@ -74,41 +75,30 @@ import Prelude (Applicative (pure), Num ((*)), ($), (.))
 -- | @since 1.0.0
 newtype PDiscrete (tag :: k) (s :: S)
     = PDiscrete (Term s (PTagged tag PInteger))
+    deriving stock
+        ( -- | @since 1.0.0
+          Generic
+        )
+    deriving anyclass
+        ( -- | @since 1.0.0
+          SOP.Generic
+        , -- | @since 1.0.0
+          PlutusType
+        , -- | @since 1.0.0
+          PIsData
+        , -- | @since 1.0.0
+          PEq
+        , -- | @since 1.2.0
+          PPartialOrd
+        , -- | @since 1.0.0
+          POrd
+        , -- | @since 1.0.0
+          PShow
+        )
 
-deriveGeneric ''PDiscrete
-
--- | @since 1.0.0
-deriving via
-    (DerivePNewtype (PDiscrete tag) (PTagged tag PInteger))
-    instance
-        (PlutusType (PDiscrete tag))
-
--- | @since 1.0.0
-deriving via
-    (DerivePNewtype (PDiscrete tag) (PTagged tag PInteger))
-    instance
-        PIsData (PDiscrete tag)
-
--- | @since 1.0.0
-deriving via
-    (DerivePNewtype (PDiscrete tag) (PTagged tag PInteger))
-    instance
-        PEq (PDiscrete tag)
-
--- | @since 1.0.0
-deriving via
-    (DerivePNewtype (PDiscrete tag) (PTagged tag PInteger))
-    instance
-        POrd (PDiscrete tag)
-
--- | @since 1.0.0
-deriving anyclass instance PShow (PDiscrete tag)
-
--- | @since 1.0.0
-deriving via
-    (DerivePNewtype (PDiscrete tag) (PTagged tag PInteger))
-    instance
-        (PTryFrom a PInteger) => PTryFrom a (PDiscrete tag)
+-- | @since 1.2.0
+instance DerivePlutusType (PDiscrete a) where
+    type DPTStrat _ = PlutusTypeNewtype
 
 -- | @since 1.0.0
 instance PTryFrom PData (PAsData (PDiscrete tag)) where
@@ -191,35 +181,30 @@ type PRateDecimal = PFixedDecimal 1000000
 -- | @since 1.0.1
 newtype PExchangeRate (from :: k) (to :: k') (s :: S)
     = PExchangeRate (Term s (PTagged '(from, to) PRateDecimal))
+    deriving stock
+        ( -- | @since 1.2.0
+          Generic
+        )
+    deriving anyclass
+        ( -- | @since 1.0.0
+          SOP.Generic
+        , -- | @since 1.0.0
+          PlutusType
+        , -- | @since 1.0.1
+          PIsData
+        , -- | @since 1.0.1
+          PEq
+        , -- | @since 1.0.1
+          PPartialOrd
+        , -- | @since 1.0.1
+          POrd
+        , -- | @since 1.0.1
+          PShow
+        )
 
-deriveGeneric ''PExchangeRate
-
--- | @since 1.0.1
-deriving via
-    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
-    instance
-        PlutusType (PExchangeRate from to)
-
--- | @since 1.0.1
-deriving via
-    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
-    instance
-        PIsData (PExchangeRate from to)
-
--- | @since 1.0.1
-deriving via
-    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
-    instance
-        PEq (PExchangeRate from to)
-
--- | @since 1.0.1
-deriving via
-    (DerivePNewtype (PExchangeRate from to) (PTagged '(from, to) PRateDecimal))
-    instance
-        POrd (PExchangeRate from to)
-
--- | @since 1.0.1
-deriving anyclass instance PShow (PExchangeRate from to)
+-- | @since 1.2.0
+instance DerivePlutusType (PExchangeRate from to) where
+    type DPTStrat _ = PlutusTypeNewtype
 
 -- | @since 1.0.1
 instance PTryFrom PData (PAsData (PExchangeRate from to)) where
