@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.follows = "plutarch/nixpkgs";
-    nixpkgs-latest.url = "github:NixOS/nixpkgs?rev=a0a69be4b5ee63f1b5e75887a406e9194012b492";
+    nixpkgs-latest.url = "github:NixOS/nixpkgs?rev=cf63df0364f67848083ff75bc8ac9b7ca7aa5a01";
 
     # temporary fix for nix versions that have the transitive follows bug
     # see https://github.com/NixOS/nix/issues/6013
@@ -45,14 +45,12 @@
           "${inputs.plutarch-numeric}"
           "${inputs.liqwid-plutarch-extra}"
         ])
-        (liqwid-nix.addChecks {
-          plutarch-safe-money = "plutarch-safe-money:lib:plutarch-safe-money";
-        })
         (liqwid-nix.enableFormatCheck [
           "-XTemplateHaskell"
           "-XTypeApplications"
           "-XPatternSynonyms"
         ])
+        liqwid-nix.addBuildChecks
         liqwid-nix.enableCabalFormatCheck
         liqwid-nix.enableNixFormatCheck
         liqwid-nix.enableLintCheck
