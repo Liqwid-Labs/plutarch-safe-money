@@ -15,6 +15,7 @@ usage:
 	@echo "  dev                 -- Run cabal v2-build -f development"
 	@echo "  watch [COMMAND]     -- Track files: plutarch-safe-money.cabal, src/* test/* testlib/* and run 'make [COMMAND]' on change"
 	@echo "  test                -- Run cabal v2-test"
+	@echo "  ci                  -- Build the full CI (hydra) derivation"
 	@echo "  ghci                -- Run cabal v2-repl plutarch-safe-money"
 	@echo "  format              -- Apply source code formatting with fourmolu"
 	@echo "  format_check        -- Check source code formatting without making changes"
@@ -77,7 +78,7 @@ format_check:
 
 # Execute CI
 ci: 
-	nix-build ./nix/ci.nix
+	nix build '.#check.x86_64-linux'
 
 NIX_SHELL = nix develop
 HLS_SHELL = $(NIX_SHELL) -c nix-shell -p bashInteractive haskell-language-server

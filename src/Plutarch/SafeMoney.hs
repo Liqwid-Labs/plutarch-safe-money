@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -38,18 +37,14 @@ import Plutarch (
     (:-->),
  )
 import Plutarch.Api.V1 (AmountGuarantees, KeyGuarantees, PValue)
-import Plutarch.Api.V1.AssetClass (
+import Plutarch.Bool (PEq, POrd, PPartialOrd, pif, (#==))
+import Plutarch.Builtin (PAsData, PData, PIsData)
+import Plutarch.Extra.Applicative (ppure)
+import Plutarch.Extra.AssetClass (
     PAssetClass,
     passetClass,
     passetClassValueOf,
  )
-import "liqwid-plutarch-extra" Plutarch.Api.V1.Value (
-    passetClassValue,
-    psingletonValue,
- )
-import Plutarch.Bool (PEq, POrd, PPartialOrd, pif, (#==))
-import Plutarch.Builtin (PAsData, PData, PIsData)
-import Plutarch.Extra.Applicative (ppure)
 import Plutarch.Extra.Comonad (pextract)
 import Plutarch.Extra.FixedDecimal (
     DivideSemigroup (divide),
@@ -59,6 +54,10 @@ import Plutarch.Extra.FixedDecimal (
  )
 import Plutarch.Extra.Tagged (PTagged)
 import Plutarch.Extra.TermCont (pletC, pmatchC)
+import Plutarch.Extra.Value (
+    passetClassValue,
+    psingletonValue,
+ )
 import Plutarch.Integer (PInteger)
 import Plutarch.Lift (pconstant)
 import Plutarch.Maybe (PMaybe (..))
