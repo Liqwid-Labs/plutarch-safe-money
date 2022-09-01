@@ -69,6 +69,7 @@ library
     , plutarch
     , plutarch-numeric
     , plutus-ledger-api
+    , plutus-tx
     , tagged
 
   hs-source-dirs:  src
