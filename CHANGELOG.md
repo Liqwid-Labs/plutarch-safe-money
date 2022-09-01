@@ -2,6 +2,10 @@
 
 This format is based on [Keep A Changelog](https://keepachangelog.com/en/1.0.0).
 
+## 1.3.0 -- 2022-09-01
+
+* `Discrete` - haskell counter part of `PDiscrete`.
+
 ## 1.0.1 -- 2022-06-23
 
 ### Added
