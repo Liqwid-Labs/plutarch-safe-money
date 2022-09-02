@@ -159,7 +159,7 @@ instance AdditiveMonoid (Term s (PDiscrete tag)) where
      @since 0.3
 -}
 pvalueDiscrete ::
-  forall k.
+  forall (k :: Type).
   forall (tag :: k) (keys :: KeyGuarantees) (amounts :: AmountGuarantees) (s :: S).
   Term s (PAssetClass :--> PValue keys amounts :--> PDiscrete tag)
 pvalueDiscrete = phoistAcyclic $
@@ -169,7 +169,7 @@ pvalueDiscrete = phoistAcyclic $
      @since 0.3
 -}
 pvalueDiscrete' ::
-  forall k.
+  forall (k :: Type).
   forall (tag :: k) (keys :: KeyGuarantees) (amounts :: AmountGuarantees) (s :: S).
   Tagged tag AssetClass ->
   Term s (PValue keys amounts :--> PDiscrete tag)
@@ -184,7 +184,7 @@ pvalueDiscrete' (Tagged (AssetClass (cs, tn))) = phoistAcyclic $
      @since 0.3
 -}
 pdiscreteValue ::
-  forall k.
+  forall (k :: Type).
   forall (tag :: k) (keys :: KeyGuarantees) (amounts :: AmountGuarantees) (s :: S).
   Term s (PAssetClass :--> PDiscrete tag :--> PValue keys amounts)
 pdiscreteValue = phoistAcyclic $
@@ -251,7 +251,7 @@ instance PTryFrom PData (PAsData (PExchangeRate from to)) where
  @since 1.0.1
 -}
 pexchangeRatio ::
-  forall k.
+  forall (k :: Type).
   forall (to :: k) (from :: k) (s :: S).
   Term s (PInteger :--> PInteger :--> PMaybe (PExchangeRate from to))
 pexchangeRatio = phoistAcyclic $
@@ -269,7 +269,7 @@ pexchangeRatio = phoistAcyclic $
  @since 1.0.1
 -}
 pexchange ::
-  forall k.
+  forall (k :: Type).
   forall (to :: k) (from :: k) (s :: S).
   Term s (PExchangeRate from to :--> PDiscrete from :--> PDiscrete to)
 pexchange = phoistAcyclic $
